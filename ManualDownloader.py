@@ -66,7 +66,7 @@ class Downloader(object):
         else:
             return "%.3fK" % (kb)
 
-    def download(self, version, file_name='factorio.tar.xz'):
+    def download(self, version, file_name='factorio.tar.xz', download='abort'):
         logging.info('Downloading...')
         file_name_len = len(file_name)
         self.start_time = time.time()
@@ -74,7 +74,7 @@ class Downloader(object):
         file_dir = file_path[:-file_name_len]
         if not os.path.exists(file_dir):
             os.mkdir(file_dir)
-        if not os.path.isfile(file_path):
+        if not os.path.isfile(file_path) and download == 'overwrite':
             url = 'https://www.factorio.com/get-download/%s/headless/linux64' % version
             try:
                 request.urlopen(url)
@@ -88,7 +88,7 @@ class Downloader(object):
             except urllib.error.HTTPError:
                 logging.info('Download failed')
                 return False
-        else:
+        elif download == 'abort':
             logging.info('File exists')
             return False
         print()
@@ -202,6 +202,9 @@ if __name__ == '__main__':
                         help='Temporary directory\' s name, default is factorio_files/')
     parser.add_argument('--del-tmp', '-d', default=True, type=bool, nargs=1, dest='del_tmp',
                         help='Whether to delete the temporary files, default is True')
+    parser.add_argument('--download', default='abort', type=str, nargs=1, dest='download',
+                        choices=['overwrite', 'skip', 'abort'],
+                        help='How to deal with existing tar.xz file')
 
     args = parser.parse_args()
     # dont know why [0] here
@@ -209,10 +212,11 @@ if __name__ == '__main__':
     tarxz_name = args.tarxz_name
     dir_name = args.dir_name
     del_tmp = args.del_tmp
+    download = args.download
 
     success = True
 
-    if success:
+    if success and download != 'skip':
         success = Downloader().download(version=version, file_name=tarxz_name)
     if success:
         success = Decompressor.decompress(input_xzfile=tarxz_name, output_dir=dir_name)
