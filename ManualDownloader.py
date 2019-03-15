@@ -11,6 +11,7 @@ import shutil
 import tarfile
 import argparse
 import psutil
+import re
 
 '''
  urllib.urlretrieve 的回调函数：
@@ -43,9 +44,10 @@ class Downloader(object):
         percent_str = "%.2f%%" % (pervent * 100)
         n = round(pervent * 50)
         s = ('#' * n).ljust(50, '-')
-        f.write(percent_str.ljust(8, ' ') + '[' + s + ']' + speed_str)
+        s = percent_str.ljust(8, ' ') + '[' + s + ']' + speed_str
+        f.write(s.ljust(80, ' '))
         f.flush()
-        time.sleep(0.1)
+        time.sleep(1)
         f.write('\r')
 
     def format_size(self, bytes):
@@ -71,7 +73,8 @@ class Downloader(object):
             logging.info('Skip downloading')
             return True
         logging.info('Downloading...')
-        file_name_len = len(file_name)
+        pslash = file_name.rfind('/')
+        file_name_len = len(file_name[pslash:])
         self.start_time = time.time()
         file_path = os.path.join(os.getcwd(), file_name)
         file_dir = file_path[:-file_name_len]
@@ -94,6 +97,8 @@ class Downloader(object):
         elif download == 'abort':
             logging.info('File exists')
             return False
+        else:
+            raise RuntimeError('not abort and overwrite')
         print()
         logging.info('Download finished')
         return True
@@ -102,13 +107,13 @@ class Downloader(object):
 class Decompressor(object):
 
     @staticmethod
-    def un_xz(input_xzfile='factorio.tar.xz', output_file='factorio.tar'):
+    def un_xz(input_xzfile='factorio.tar.xz', output_file='./tmp/factorio.tar'):
         with lzma.open(input_xzfile, 'rb') as input:
             with open(output_file, 'wb') as output:
                 shutil.copyfileobj(input, output)
 
     @staticmethod
-    def un_tar(file_name='factorio.tar', output_dir=None):
+    def un_tar(file_name='./tmp/factorio.tar', output_dir=None):
         tar = tarfile.open(file_name)
         names = tar.getnames()
         if not output_dir:
@@ -126,11 +131,16 @@ class Decompressor(object):
     def decompress(input_xzfile='factorio.tar.xz', output_dir='factorio/'):
         logging.info('Decompressing...')
         Decompressor.un_xz(input_xzfile=input_xzfile)
-        Decompressor.un_tar('factorio.tar', output_dir)
+        Decompressor.un_tar('./tmp/factorio.tar', output_dir)
         return True
 
 
 class Copyer(object):
+
+    @staticmethod
+    def __rm_data_core(targetDir):
+        # TODO: remvoe 'source' and 'core' dir
+        pass
 
     @staticmethod
     def __mycopy(sourceDir, targetDir):
@@ -195,6 +205,10 @@ def rmrf(dir):
         pass
 
 
+def ret_arg(obj, type):
+    return obj if isinstance(obj, type) else obj[0]
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Upgrade factorio')
@@ -202,9 +216,9 @@ if __name__ == '__main__':
                         help='Target version of factorio')
     parser.add_argument('--tar-dir', '-D', default='factorio', type=str, nargs=1, dest='tar_dir',
                         help='target directory for factorio')
-    parser.add_argument('--tarxz-name', default='factorio.tar.xz', type=str, nargs=1, dest='tarxz_name',
+    parser.add_argument('--tarxz-name', default='./tmp/factorio.tar.xz', type=str, nargs=1, dest='tarxz_name',
                         help='Temporary tar.xz file\' s name, default is factorio.tar.xz')
-    parser.add_argument('--dic-name', default='factorio_files/', type=str, nargs=1, dest='dir_name',
+    parser.add_argument('--dic-name', default='./tmp/factorio_files/', type=str, nargs=1, dest='dir_name',
                         help='Temporary directory\' s name, default is factorio_files/')
     parser.add_argument('--del-tmp', '-d', default=True, type=bool, nargs=1, dest='del_tmp',
                         help='Whether to delete the temporary files, default is True')
@@ -213,13 +227,12 @@ if __name__ == '__main__':
                         help='Configuration to downloading stage')
 
     args = parser.parse_args()
-    # dont know why [0] here
-    version = args.version[0]
-    tar_dir = args.tar_dir[0]
-    tarxz_name = args.tarxz_name
-    dir_name = args.dir_name
-    del_tmp = args.del_tmp
-    download = args.download[0]
+    version = ret_arg(args.version[0], str)
+    tar_dir = ret_arg(args.tar_dir[0], str)
+    tarxz_name = ret_arg(args.tarxz_name, str)
+    dir_name = ret_arg(args.dir_name, str)
+    del_tmp = ret_arg(args.del_tmp, bool)
+    download = ret_arg(args.download, str)
 
     logging.debug(args)
 
@@ -244,8 +257,9 @@ if __name__ == '__main__':
             except:
                 pass
             rmrf(dir_name)
+        else:
+            logging.info('Not cleaning')
 
             logging.info('Finished')
 
 # TODO: 抓中断，删文件
-# TODO: 下载的文件都放进一个temp里
