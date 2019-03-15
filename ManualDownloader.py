@@ -11,15 +11,6 @@ import shutil
 import tarfile
 import argparse
 import psutil
-import re
-
-'''
- urllib.urlretrieve 的回调函数：
-def callbackfunc(blocknum, blocksize, totalsize):
-    @blocknum:  已经下载的数据块
-    @blocksize: 数据块的大小
-    @totalsize: 远程文件的大小
-'''
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -56,7 +47,7 @@ class Downloader(object):
             bytes = float(bytes)
             kb = bytes / 1024
         except:
-            print("传入的字节格式不对")
+            logging.critical('Wrong input format')
             return "Error"
         if kb >= 1024:
             M = kb / 1024
@@ -145,7 +136,7 @@ class Copyer(object):
     @staticmethod
     def __mycopy(sourceDir, targetDir):
         logging.debug(sourceDir)
-        logging.debug(u"当前处理文件夹%s" % sourceDir)
+        logging.debug(u"dealing with %s" % sourceDir)
         for f in os.listdir(sourceDir):
             sourceF = os.path.join(sourceDir, f)
             targetF = os.path.join(targetDir, f)
@@ -263,3 +254,5 @@ if __name__ == '__main__':
             logging.info('Finished')
 
 # TODO: 抓中断，删文件
+# TODO: 改成wget
+# TODO: 删core和base，备份
