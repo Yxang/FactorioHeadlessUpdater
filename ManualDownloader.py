@@ -74,7 +74,7 @@ class Downloader(object):
         file_dir = file_path[:-file_name_len]
         if not os.path.exists(file_dir):
             os.mkdir(file_dir)
-        if not os.path.isfile(file_path) and download == 'overwrite':
+        if not os.path.isfile(file_path) or download == 'overwrite':
             url = 'https://www.factorio.com/get-download/%s/headless/linux64' % version
             try:
                 request.urlopen(url)
