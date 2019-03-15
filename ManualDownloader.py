@@ -22,7 +22,7 @@ def callbackfunc(blocknum, blocksize, totalsize):
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     stream=sys.stdout)
 
 
@@ -67,6 +67,9 @@ class Downloader(object):
             return "%.3fK" % (kb)
 
     def download(self, version, file_name='factorio.tar.xz', download='abort'):
+        if download == 'skip':
+            logging.info('Skip downloading')
+            return True
         logging.info('Downloading...')
         file_name_len = len(file_name)
         self.start_time = time.time()
@@ -92,6 +95,7 @@ class Downloader(object):
             logging.info('File exists')
             return False
         print()
+        logging.info('Download finished')
         return True
 
 
@@ -194,8 +198,10 @@ def rmrf(dir):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Upgrade factorio')
-    parser.add_argument('--target-version', '-T', required=True, type=str, nargs=1, dest='version',
+    parser.add_argument('--tar-version', '-T', required=True, type=str, nargs=1, dest='version',
                         help='Target version of factorio')
+    parser.add_argument('--tar-dir', '-D', default='factorio', type=str, nargs=1, dest='tar_dir',
+                        help='target directory for factorio')
     parser.add_argument('--tarxz-name', default='factorio.tar.xz', type=str, nargs=1, dest='tarxz_name',
                         help='Temporary tar.xz file\' s name, default is factorio.tar.xz')
     parser.add_argument('--dic-name', default='factorio_files/', type=str, nargs=1, dest='dir_name',
@@ -204,26 +210,31 @@ if __name__ == '__main__':
                         help='Whether to delete the temporary files, default is True')
     parser.add_argument('--download', default='abort', type=str, nargs=1, dest='download',
                         choices=['overwrite', 'skip', 'abort'],
-                        help='How to deal with existing tar.xz file')
+                        help='Configuration to downloading stage')
 
     args = parser.parse_args()
     # dont know why [0] here
     version = args.version[0]
+    tar_dir = args.tar_dir[0]
     tarxz_name = args.tarxz_name
     dir_name = args.dir_name
     del_tmp = args.del_tmp
-    download = args.download
+    download = args.download[0]
+
+    logging.debug(args)
 
     success = True
 
     if success and download != 'skip':
         success = Downloader().download(version=version, file_name=tarxz_name, download=download)
+    elif download == 'skip':
+        logging.info('Skip downloading')
     if success:
         success = Decompressor.decompress(input_xzfile=tarxz_name, output_dir=dir_name)
     if success:
         Killer.kill()
     if success:
-        success = Copyer.copy(sourceDir=dir_name + 'factorio')
+        success = Copyer.copy(sourceDir=dir_name + 'factorio', targetDir=tar_dir)
     if success:
         logging.info('Upgrade success')
         if del_tmp:
@@ -236,6 +247,5 @@ if __name__ == '__main__':
 
             logging.info('Finished')
 
-# TODO: 原来factorio的地址
 # TODO: 抓中断，删文件
 # TODO: 下载的文件都放进一个temp里
