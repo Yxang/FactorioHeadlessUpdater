@@ -91,6 +91,7 @@ class Downloader(object):
         else:
             logging.info('File exists')
             return False
+        print()
         return True
 
 
@@ -161,7 +162,7 @@ class Killer(object):
         for pid in pids:
             p = psutil.Process(pid)
             if processName.lower() in p.name().lower():
-                logging.debug('killing pid %s, name %s' % (pid, p.name()))
+                logging.info('killing pid %s, name %s' % (pid, p.name()))
                 os.system('kill %s' % pid)
 
         for pid in pids:
