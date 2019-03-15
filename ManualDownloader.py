@@ -139,13 +139,14 @@ class Copyer(object):
             if not os.path.exists(targetDir):
                 os.makedirs(targetDir)
 
-            if not os.path.exists(targetF) or (
-                    os.path.exists(targetF) and (os.path.getsize(targetF) != os.path.getsize(sourceF))):
-                open(targetF, "wb").write(open(sourceF, "rb").read())
-                logging.debug(u"%s Copy complete" % targetF)
-
             if os.path.isdir(sourceF):
                 Copyer.__mycopy(sourceF, targetF)
+            else:
+                if not os.path.exists(targetF) or (
+                        os.path.exists(targetF) and (os.path.getsize(targetF) != os.path.getsize(sourceF))):
+                    open(targetF, "wb").write(open(sourceF, "rb").read())
+                    logging.debug(u"%s Copy complete" % targetF)
+
 
     @staticmethod
     def copy(sourceDir=r'factorio.tar_files/factorio', targetDir=r'factorio'):
@@ -170,6 +171,24 @@ class Killer(object):
             if processName.lower() in p.name().lower():
                 return False
         return True
+
+
+def rmrf(dir):
+    for root, dirs, files in os.walk(dir, topdown=False):
+        for name in files:
+            try:
+                os.remove(os.path.join(root, name))
+            except:
+                pass
+        for name in dirs:
+            try:
+                os.rmdir(os.path.join(root, name))
+            except:
+                pass
+    try:
+        os.rmdir(dir_name)
+    except:
+        pass
 
 
 if __name__ == '__main__':
@@ -200,13 +219,17 @@ if __name__ == '__main__':
     if success:
         Killer.kill()
     if success:
-        success = Copyer.copy(sourceDir=dir_name)
+        success = Copyer.copy(sourceDir=dir_name + 'factorio')
     if success:
         logging.info('Upgrade success')
         if del_tmp:
             logging.info('Cleaning...')
-            os.remove(tarxz_name)
-            os.remove(dir_name)
+            try:
+                os.remove(tarxz_name)
+            except:
+                pass
+            rmrf(dir_name)
+
             logging.info('Finished')
 
 # TODO: 原来factorio的地址
