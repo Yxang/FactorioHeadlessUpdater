@@ -217,7 +217,7 @@ if __name__ == '__main__':
     success = True
 
     if success and download != 'skip':
-        success = Downloader().download(version=version, file_name=tarxz_name)
+        success = Downloader().download(version=version, file_name=tarxz_name, download=download)
     if success:
         success = Decompressor.decompress(input_xzfile=tarxz_name, output_dir=dir_name)
     if success:
