@@ -15,7 +15,7 @@ import wget
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
-    level=logging.DEBUG,
+    level=logging.INFO,
     stream=sys.stdout)
 
 
@@ -292,4 +292,3 @@ if __name__ == '__main__':
             logging.info('Finished')
 
 # TODO: 抓中断，删文件
-# TODO: 删core和base，备份
