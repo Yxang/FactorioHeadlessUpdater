@@ -11,6 +11,7 @@ import shutil
 import tarfile
 import argparse
 import psutil
+import wget
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -22,42 +23,6 @@ class Downloader(object):
 
     def __init__(self):
         self.start_time = time.time()
-
-    def schedule(self, blocknum, blocksize, totalsize):
-        speed = (blocknum * blocksize) / (time.time() - self.start_time)
-        # speed_str = " Speed: %.2f" % speed
-        speed_str = " Speed: %s" % self.format_size(speed)
-        recv_size = blocknum * blocksize
-
-        # 设置下载进度条
-        f = sys.stdout
-        pervent = recv_size / totalsize
-        percent_str = "%.2f%%" % (pervent * 100)
-        n = round(pervent * 50)
-        s = ('#' * n).ljust(50, '-')
-        s = percent_str.ljust(8, ' ') + '[' + s + ']' + speed_str
-        f.write(s.ljust(80, ' '))
-        f.flush()
-        time.sleep(1)
-        f.write('\r')
-
-    def format_size(self, bytes):
-        # 字节bytes转化K\M\G
-        try:
-            bytes = float(bytes)
-            kb = bytes / 1024
-        except:
-            logging.critical('Wrong input format')
-            return "Error"
-        if kb >= 1024:
-            M = kb / 1024
-            if M >= 1024:
-                G = M / 1024
-                return "%.3fG" % (G)
-            else:
-                return "%.3fM" % (M)
-        else:
-            return "%.3fK" % (kb)
 
     def download(self, version, file_name='factorio.tar.xz', download='abort'):
         if download == 'skip':
@@ -73,15 +38,22 @@ class Downloader(object):
             os.mkdir(file_dir)
         if not os.path.isfile(file_path) or download == 'overwrite':
             url = 'https://www.factorio.com/get-download/%s/headless/linux64' % version
+
             try:
                 request.urlopen(url)
             except urllib.error.HTTPError:
                 logging.info('HTTP Error, might input a wrong version')
                 return False
+
+            try:
+                os.remove(file_path)
+            except FileNotFoundError:
+                pass
+
             logging.info('Downloading factorio version %s from %s' %
                          (version, url))
             try:
-                request.urlretrieve(url, file_path, self.schedule)
+                wget.download(url, out=file_name)
             except urllib.error.HTTPError:
                 logging.info('Download failed')
                 return False
@@ -90,7 +62,6 @@ class Downloader(object):
             return False
         else:
             raise RuntimeError('not abort and overwrite')
-        print()
         logging.info('Download finished')
         return True
 
@@ -167,14 +138,20 @@ class Killer(object):
         pids = psutil.pids()
         for pid in pids:
             p = psutil.Process(pid)
-            if processName.lower() in p.name().lower():
-                logging.info('killing pid %s, name %s' % (pid, p.name()))
-                os.system('kill %s' % pid)
+            try:
+                if processName.lower() in p.name().lower():
+                    logging.info('killing pid %s, name %s' % (pid, p.name()))
+                    os.system('kill %s' % pid)
+            except:
+                pass
 
         for pid in pids:
             p = psutil.Process(pid)
-            if processName.lower() in p.name().lower():
-                return False
+            try:
+                if processName.lower() in p.name().lower():
+                    return False
+            except:
+                pass
         return True
 
 
@@ -214,7 +191,7 @@ if __name__ == '__main__':
     parser.add_argument('--download', default='abort', type=str, nargs=1, dest='download',
                         choices=['overwrite', 'skip', 'abort'],
                         help='Configuration to downloading stage')
-    parser.add_argument('--cleaning', default=1, type=1, nargs=1, dest='cleaning',
+    parser.add_argument('--cleaning', default=1, type=int, nargs=1, dest='cleaning',
                         help='Whether to clean the temp files')
 
     args = parser.parse_args()
