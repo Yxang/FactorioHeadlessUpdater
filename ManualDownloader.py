@@ -15,7 +15,7 @@ import wget
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     stream=sys.stdout)
 
 
