@@ -211,19 +211,19 @@ if __name__ == '__main__':
                         help='Temporary tar.xz file\' s name, default is factorio.tar.xz')
     parser.add_argument('--dic-name', default='./tmp/factorio_files/', type=str, nargs=1, dest='dir_name',
                         help='Temporary directory\' s name, default is factorio_files/')
-    parser.add_argument('--del-tmp', '-d', default=True, type=bool, nargs=1, dest='del_tmp',
-                        help='Whether to delete the temporary files, default is True')
     parser.add_argument('--download', default='abort', type=str, nargs=1, dest='download',
                         choices=['overwrite', 'skip', 'abort'],
                         help='Configuration to downloading stage')
+    parser.add_argument('--cleaning', default=1, type=1, nargs=1, dest='cleaning',
+                        help='Whether to clean the temp files')
 
     args = parser.parse_args()
     version = ret_arg(args.version[0], str)
     tar_dir = ret_arg(args.tar_dir[0], str)
     tarxz_name = ret_arg(args.tarxz_name, str)
     dir_name = ret_arg(args.dir_name, str)
-    del_tmp = ret_arg(args.del_tmp, bool)
     download = ret_arg(args.download, str)
+    cleaning = bool(ret_arg(args.cleaning, int))
 
     logging.debug(args)
 
@@ -241,7 +241,7 @@ if __name__ == '__main__':
         success = Copyer.copy(sourceDir=dir_name + 'factorio', targetDir=tar_dir)
     if success:
         logging.info('Upgrade success')
-        if del_tmp:
+        if cleaning:
             logging.info('Cleaning...')
             try:
                 os.remove(tarxz_name)
