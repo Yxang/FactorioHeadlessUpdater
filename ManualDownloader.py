@@ -115,12 +115,18 @@ class Transferer(object):
         backup_dir = self.backup_dir
         if not os.path.exists(backup_dir):
             os.makedirs(backup_dir)
-        shutil.move(os.path.join(targetDir, './data/base'),
-                    os.path.join(backup_dir, './base'))
-        shutil.move(os.path.join(targetDir, './data/core'),
-                    os.path.join(backup_dir, './core'))
+        try:
+            shutil.move(os.path.join(targetDir, './data/base'),
+                        os.path.join(backup_dir, './base'))
+            shutil.move(os.path.join(targetDir, './data/core'),
+                        os.path.join(backup_dir, './core'))
+        except FileNotFoundError:
+            logging.info('Existing file missing, skipping backup')
+            # skip
+            return 1
         logging.debug('Backup finished')
-        return True
+        # succeed
+        return 0
 
     def __recover_data(self, targetDir):
         logging.debug('Start recovery')
@@ -161,12 +167,15 @@ class Transferer(object):
 
     def transfer(self, sourceDir=r'factorio_files/factorio', targetDir=r'factorio'):
         logging.info('Transfering...')
-        self.__backup_data(targetDir=targetDir)
+        backup = self.__backup_data(targetDir=targetDir)
         try:
             self.__mycopy(sourceDir, targetDir)
         except:
-            logging.info('Copy fails, recovering...')
-            self.__recover_data(targetDir=targetDir)
+            if backup == 0:
+                logging.info('Copy fails, recovering...')
+                self.__recover_data(targetDir=targetDir)
+            elif backup == 1:
+                logging.info('Copy fails. Please upgrade manually.')
         else:
             logging.info('Copy success')
             self.__rm_data()
