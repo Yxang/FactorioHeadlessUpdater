@@ -60,7 +60,8 @@ class Downloader(object):
             return False
         else:
             raise RuntimeError('not abort and overwrite')
-        logging.info('\nDownload finished')
+        print()
+        logging.info('Download finished')
         return True
 
 
@@ -142,7 +143,6 @@ class Transferer(object):
         rmrf(self.backup_dir)
         logging.debug('Removal finished')
         return True
-
 
     def __mycopy(self, sourceDir, targetDir):
         # logging.debug('Start copying files')
