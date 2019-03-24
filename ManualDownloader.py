@@ -302,5 +302,5 @@ if __name__ == '__main__':
             rmrf(tmp_dir)
         else:
             logging.info('Not cleaning')
-
-            logging.info('Finished')
+    finally:
+        logging.info('Finished')
