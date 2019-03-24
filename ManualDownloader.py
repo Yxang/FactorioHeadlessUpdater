@@ -12,6 +12,7 @@ import tarfile
 import argparse
 import psutil
 import wget
+from argparse import RawTextHelpFormatter
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -230,13 +231,14 @@ if __name__ == '__main__':
     ###########################################
     # Defining parser
     ###########################################
-    parser = argparse.ArgumentParser(description='A tool to upgrade factorio\n'
+    parser = argparse.ArgumentParser(description='A tool to upgrade factorio.\n'
                                                  'Specify the target version VERSION and target directory of factorio'
-                                                 'TAR_DIR, this tool would automatically update the application')
+                                                 ' TAR_DIR, this tool would automatically update the application.',
+                                     formatter_class=RawTextHelpFormatter)
     parser.add_argument('--tar-version', '-T', required=True, type=str, nargs=1, dest='version',
                         help='target version of factorio')
     parser.add_argument('--tar-dir', '-D', default='factorio', type=str, nargs=1, dest='tar_dir',
-                        help='the directory where existing factorio is, the default is ./factorio/')
+                        help='the directory where existing factorio is, the default is ./factorio')
     parser.add_argument('--tmp-dir', default='./tmp/', type=str, nargs=1, dest='tmp_dir',
                         help='temporary directory\' s path, in which all downloaded'
                              ' and decompressed file would be stored and loaded')
@@ -246,10 +248,10 @@ if __name__ == '__main__':
                         help='specify temporary tar.xz file\' s name, default is factorio.tar.xz')
     parser.add_argument('--unxz-dir', default='factorio_files/', type=str, nargs=1, dest='untarxz_dir',
                         help='specify the name for the temp decompressing directory,'
-                             ' default is factorio_files/ inside TMP_DIR')
+                             ' default is TMP_DIR/factorio_files')
     parser.add_argument('--download', default='abort', type=str, nargs=1, dest='download',
                         choices=['overwrite', 'skip', 'abort'],
-                        help='how to deal with existing files (temporary tar.xz file) in downloading stage\n'
+                        help='how to deal with existing files (temporary tar.xz file) in downloading stage:\n'
                              'overwrite: overwrites it\n'
                              'skip: skip and use the existing tar.xz file\n'
                              'abort: abort if there is a existing file')
