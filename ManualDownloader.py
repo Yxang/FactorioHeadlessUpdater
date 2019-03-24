@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#! /usr/bin/env python3
 # -*- coding:utf-8 -*-
 import sys
 import time
@@ -280,18 +280,23 @@ if __name__ == '__main__':
 
     success = True
 
-    if success and download != 'skip':
-        success = Downloader().download(version=version, file_name=tarxz_name, download=download)
-    elif download == 'skip':
-        logging.info('Skip downloading')
-    if success:
-        success = Decompressor().decompress(input_xzfile=tarxz_name, output_dir=untarxz_dir)
-    if success:
-        Killer.kill()
-    if success:
-        success = Transferer(tmp_dir=tmp_dir).transfer(sourceDir=untarxz_dir + './factorio', targetDir=tar_dir)
-    if success:
-        logging.info('Upgrade success')
+    try:
+        if success and download != 'skip':
+            success = Downloader().download(version=version, file_name=tarxz_name, download=download)
+        elif download == 'skip':
+            logging.info('Skip downloading')
+        if success:
+            success = Decompressor().decompress(input_xzfile=tarxz_name, output_dir=untarxz_dir)
+        if success:
+            Killer.kill()
+        if success:
+            success = Transferer(tmp_dir=tmp_dir).transfer(sourceDir=untarxz_dir + './factorio', targetDir=tar_dir)
+    except KeyboardInterrupt:
+        logging.info('Interrupted, cleaning...')
+        rmrf(tmp_dir)
+    else:
+        if success:
+            logging.info('Upgrade success')
         if cleaning:
             logging.info('Cleaning...')
             rmrf(tmp_dir)
@@ -299,5 +304,3 @@ if __name__ == '__main__':
             logging.info('Not cleaning')
 
             logging.info('Finished')
-
-# TODO: 抓中断，删文件
